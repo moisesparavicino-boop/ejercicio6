@@ -1,0 +1,160 @@
+public class BaseStats
+{
+    private int vida;
+    private int dano;
+
+    public int Vida
+    {
+        get { return vida; }
+    }
+
+    public int Dano
+    {
+        get { return dano; }
+    }
+
+    public BaseStats(int vidaInicial, int danoInicial)
+    {
+        vida = vidaInicial;
+        dano = danoInicial;
+    }
+
+    public void RecibirDanio(int cantidad)
+    {
+        vida -= cantidad;
+    }
+}
+
+
+
+
+
+using UnityEngine;
+
+public class Player : MonoBehaviour
+{
+    public BaseStats stats;
+
+    private WeaponData weapon;
+
+    [Header("Ataque")]
+    public float rangoAtaque = 5f;
+    public float tiempoEntreAtaques = 1f;
+
+    private float temporizador;
+
+    void Awake()
+    {
+        // Crear las estadísticas del jugador
+        stats = new BaseStats(100, 10);
+
+        // Crear el arma del jugador
+        weapon = new WeaponData(20);
+
+        Debug.Log("Player creado con " + stats.Vida + " de vida");
+    }
+
+    void Update()
+    {
+        temporizador += Time.deltaTime;
+
+        if (temporizador >= tiempoEntreAtaques)
+        {
+            Attack();
+
+            temporizador = 0f;
+        }
+    }
+
+    public void Attack()
+    {
+        // Buscar todos los enemigos
+        Enemy[] enemigos = FindObjectsByType<Enemy>(
+            FindObjectsSortMode.None
+        );
+
+        // Revisar cada enemigo
+        foreach (Enemy enemigo in enemigos)
+        {
+            // Calcular distancia
+            float distancia = Vector3.Distance(
+                transform.position,
+                enemigo.transform.position
+            );
+
+            // Si está dentro del rango
+            if (distancia <= rangoAtaque)
+            {
+                // Aplicar daño del arma
+                enemigo.RecibirDanio(weapon.dano);
+
+                Debug.Log("Player atacó a un enemigo");
+            }
+        }
+    }
+
+    public void SetWeapon(WeaponData weaponData)
+    {
+        weapon = weaponData;
+
+        Debug.Log("Arma cambiada");
+    }
+
+    public void RecibirDanio(int cantidad)
+    {
+        stats.RecibirDanio(cantidad);
+
+        Debug.Log("Player recibió " + cantidad + " de daño");
+
+        if (stats.Vida <= 0)
+        {
+            Debug.Log("Player murió");
+        }
+    }
+}
+
+
+
+
+
+
+
+using UnityEngine;
+
+public class Enemy : MonoBehaviour
+{
+    public BaseStats stats;
+
+    void Awake()
+    {
+        // Crear estadísticas del enemigo
+        stats = new BaseStats(50, 5);
+
+        Debug.Log("Enemy creado con " + stats.Vida + " de vida");
+    }
+
+    public void RecibirDanio(int cantidad)
+    {
+        // Recibir daño mediante método
+        stats.RecibirDanio(cantidad);
+
+        Debug.Log(
+            gameObject.name +
+            " recibió " +
+            cantidad +
+            " de daño. Vida restante: " +
+            stats.Vida
+        );
+
+        // Si la vida llega a 0
+        if (stats.Vida <= 0)
+        {
+            Destroy(gameObject);
+        }
+    }
+
+    void OnDestroy()
+    {
+        Debug.Log("Enemy destruido");
+    }
+}
